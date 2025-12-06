@@ -6,31 +6,66 @@
 mode: mujoco
 
 # ============================================
+# 机械臂配置: single_arm / dual_arm
+# ============================================
+arm_mode: single_arm  # 当前优先验证单臂功能
+
+# ============================================
 # Real 模式配置（真实硬件）
 # ============================================
 real:
   left_arm:
-    port: ""  # 留空自动搜索，或指定如 /dev/ttyUSB0
+    port: ""  # 留空自动搜索，或指定如 /dev/ttyACM0 (Linux) 或 /dev/ttyUSB0
     baudrate: 1000000
     timeout: 1.0
     robot_version: v5_6
     gripper_type: 50mm
     speed_deg_s: 20.0
   right_arm:
-    port: ""
+    port: ""  # 留空自动搜索，或指定如 /dev/ttyACM1
     baudrate: 1000000
     timeout: 1.0
     robot_version: v5_6
     gripper_type: 50mm
     speed_deg_s: 20.0
+  wait_timeout: 6.0
+  wait_poll_interval: 0.05
+  wait_tolerance_deg: 3.0
+  pose_control:
+    backend: numpy
+    method: dls
+    display: false
+    tolerance: 0.0005
+    max_iters: 200
+    speed_factor: 1.0
+    execute: true
+    pos_tolerance: 0.005      # 等待阶段的位置误差 (米)
+    ori_tolerance_deg: 5.0    # 等待阶段的姿态误差 (度)
 
 # ============================================
 # MuJoCo 仿真配置
 # ============================================
 mujoco:
-  model_path: data/models/alicia_dual_arm.xml
+  # 单臂模型（优先验证）
+  single_arm_model: data/models/alicia_duo_with_gripper.xml
+  # 双臂模型（后续开发）
+  dual_arm_model: data/models/alicia_dual_arm.xml
+
   timestep: 0.002  # 仿真步长（秒）
   gui: true  # 是否启动 GUI（macOS 需要 mjpython）
+  # 逆运动学/姿态控制配置
+  pose_steps: 80
+  pose_step_delay: 0.006
+  ik_max_iters: 150
+  ik_pos_tolerance: 0.001
+  ik_ori_tolerance: 0.02
+  ik_damping: 0.001
+  ik_step_scale: 0.8
+  ik_max_attempts: 4
+  ik_orientation_weight: 1.0
+  ik_allow_orientation_relax: true
+  # 可选：与真机一致的 Home 位置（若省略则使用全 0）
+  home_joint_angles: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
 # ============================================
 # API 服务配置
@@ -52,3 +87,7 @@ safety:
     - [-3.14, 3.14]   # Joint6: ±180°
   gripper_limits: [0, 100]
   max_speed_deg_s: 30.0  # 最大速度限制
+  workspace_limits:       # 笛卡尔空间安全范围 (示例值，可根据实际调整)
+    x: [0.15, 0.60]
+    y: [-0.25, 0.25]
+    z: [0.10, 0.80]

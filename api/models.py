@@ -14,6 +14,7 @@ class ArmSide(str, Enum):
 class ActionType(str, Enum):
     """动作类型"""
     MOVE_JOINT = "move_joint"
+    MOVE_JOINT_SMOOTH = "move_joint_smooth"  # 平滑运动，带轨迹规划
     MOVE_POSE = "move_pose"
     CONTROL_GRIPPER = "control_gripper"
     SET_HOME = "set_home"

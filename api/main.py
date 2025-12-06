@@ -159,6 +159,15 @@ def execute_action(controller, action) -> bool:
             raise ValueError("move_joint requires 'joints' parameter with 6 values")
         return controller.move_joint(arm, joints, wait=wait)
 
+    elif action.type == ActionType.MOVE_JOINT_SMOOTH:
+        # 期望参数: joints (list of 6 floats in radians), steps (int), step_delay (float)
+        joints = params.get("joints")
+        if not joints or len(joints) != 6:
+            raise ValueError("move_joint_smooth requires 'joints' parameter with 6 values")
+        steps = params.get("steps", 20)
+        step_delay = params.get("step_delay", 0.05)
+        return controller.move_joint_smooth(arm, joints, steps=steps, step_delay=step_delay)
+
     elif action.type == ActionType.MOVE_POSE:
         # 期望参数: pose (list of 7 floats: x,y,z,qx,qy,qz,qw)
         pose = params.get("pose")

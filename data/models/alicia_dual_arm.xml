@@ -1,5 +1,5 @@
 <mujoco model="alicia_dual_arm">
-  <compiler angle="radian" meshdir="../../meshes/Alicia-D_v5_4/"/>
+  <compiler angle="radian" meshdir="meshes/Alicia-D_v5_4/"/>
   <statistic center="0 0 1.0" extent="2.2" meansize="0.2"/>
   <visual>
     <scale jointwidth="0.02" framelength="0.3" framewidth="0.01"/>

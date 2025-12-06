@@ -27,10 +27,26 @@ def load_config():
 def get_model_path_from_config(config):
     """从配置文件获取模型路径"""
     mujoco_config = config.get("mujoco", {})
-    model_path = mujoco_config.get("model_path", "data/models/alicia_dual_arm.xml")
+    arm_mode = config.get("arm_mode", "dual_arm")
+
+    # 根据 arm_mode 选择默认模型
+    if arm_mode == "single_arm":
+        default_model = mujoco_config.get(
+            "single_arm_model",
+            "data/models/alicia_duo_with_gripper.xml"
+        )
+    else:
+        default_model = mujoco_config.get(
+            "dual_arm_model",
+            "data/models/alicia_dual_arm.xml"
+        )
+
+    model_path = mujoco_config.get("model_path", default_model)
+
     # 转换为绝对路径
     if not Path(model_path).is_absolute():
         model_path = str(Path(__file__).parent.parent / model_path)
+
     return model_path
 
 
@@ -184,11 +200,27 @@ if __name__ == "__main__":
         action="store_true",
         help="运行演示模式"
     )
+    parser.add_argument(
+        "--single-arm",
+        action="store_true",
+        help="使用单臂模型（优先验证）"
+    )
+    parser.add_argument(
+        "--dual-arm",
+        action="store_true",
+        help="使用双臂模型"
+    )
 
     args = parser.parse_args()
 
     # 加载配置
     config = load_config()
+
+    # 根据命令行参数覆盖 arm_mode
+    if args.single_arm:
+        config["arm_mode"] = "single_arm"
+    elif args.dual_arm:
+        config["arm_mode"] = "dual_arm"
 
     # 获取模型路径
     if args.model:
@@ -196,6 +228,7 @@ if __name__ == "__main__":
     else:
         # 从配置文件读取
         model_path = Path(get_model_path_from_config(config))
+        print(f"使用模型: {config.get('arm_mode', 'dual_arm')} - {model_path.name}")
 
     # 检查模型文件是否存在
     if not model_path.exists():
