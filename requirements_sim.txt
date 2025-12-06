@@ -1,0 +1,14 @@
+# MuJoCo 仿真依赖
+# 在 requirements.txt 基础上添加仿真相关包
+
+# MuJoCo 物理引擎
+mujoco>=3.0.0
+
+# 数值计算（MuJoCo 依赖）
+numpy>=1.20.0
+
+# 可视化增强
+matplotlib>=3.5.0
+
+# 可选：高级可视化
+# mujoco-viewer  # 第三方查看器（可选）
