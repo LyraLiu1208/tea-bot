@@ -112,28 +112,25 @@ controller.emergency_stop()                     # 紧急停止
 ```bash
 python test_real_arm.py --mode real  # 或 mujoco
 
-# 菜单 (奶茶机器人功能):
+# 菜单 (核心基础能力):
 # 基础运动:
-#   1. Home 位置
-#   2. 预设位置
-#   3. 自定义角度 (直接)
-#   4. 自定义角度 (平滑) ⭐
+#   1. 回到 Home 位置 (平滑)
+#   2. 预设位置测试 (轻微弯曲)
+#   3. 自定义关节角度 (梯形轨迹)
 #
 # 笛卡尔空间:
-#   5. 移动到笛卡尔位置 (XYZ)
-#   6. 笛卡尔直线运动
+#   4. 移动到笛卡尔位置 (XYZ)
 #
-# 夹爪控制:
-#   7. 夹爪开合测试
-#   8. 抓取-移动-放置流程 ⭐
-#
-# 组合动作:
-#   12. 倾倒动作 (旋转手腕)
-#   13. 搅拌动作 (循环路径)
+# 夹爪:
+#   5. 夹爪开合测试
 #
 # 状态与安全:
-#   14. 查看状态
-#   15. 紧急停止
+#   6. 查看当前状态
+#   7. 紧急停止 (立即停止当前动作)
+#
+# 说明:
+# - 真机模式会提示安全注意事项，所有输入均自动执行，需准备物理急停。
+# - 关节/笛卡尔目标会在执行前校验配置的安全限位。
 ```
 
 ### tools/run_simulation.py - 仿真
@@ -162,6 +159,9 @@ mujoco:
   single_arm_model: data/models/alicia_duo_with_gripper.xml
   dual_arm_model: data/models/alicia_dual_arm.xml
   gui: true
+  timestep: 0.002
+  pose_steps: 80
+  pose_step_delay: 0.006
 
 # Real 模式配置
 real:
@@ -170,6 +170,32 @@ real:
     baudrate: 1000000
     robot_version: v5_6
     gripper_type: 50mm
+    speed_deg_s: 20.0
+  wait_timeout: 6.0
+  wait_poll_interval: 0.05
+  wait_tolerance_deg: 3.0
+  pose_control:
+    backend: numpy
+    method: dls
+    tolerance: 0.0005
+    max_iters: 200
+    speed_factor: 1.0
+    execute: true
+
+# 安全限位
+safety:
+  joint_limits:
+    - [-2.16, 2.16]
+    - [-1.57, 1.57]
+    - [-0.5, 2.36]
+    - [-3.14, 3.14]
+    - [-1.57, 1.5]
+    - [-3.14, 3.14]
+  workspace_limits:
+    x: [0.15, 0.60]
+    y: [-0.25, 0.25]
+    z: [0.10, 0.80]
+```
 ```
 
 ---
