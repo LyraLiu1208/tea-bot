@@ -19,6 +19,7 @@ class AliciaDualArmController(BaseDualArmController):
     def __init__(self, config: Dict):
         super().__init__(config)
         self.real_config = config.get("real", {})
+        self.arm_mode = config.get("arm_mode", "dual_arm")
         self.wait_params = {
             "timeout": self.real_config.get("wait_timeout", 6.0),
             "poll_interval": self.real_config.get("wait_poll_interval", 0.05),
@@ -38,10 +39,11 @@ class AliciaDualArmController(BaseDualArmController):
             logger.error("alicia_d_sdk not found! Please install: pip install alicia-d-sdk")
             raise
 
-        # 创建两个机械臂实例
+        # 根据 arm_mode 创建机械臂实例
         left_config = self.real_config.get("left_arm", {})
         right_config = self.real_config.get("right_arm", {})
 
+        # 始终创建左臂实例
         self.left_robot = self.create_robot(
             port=left_config.get("port", ""),  # 空字符串表示自动搜索
             baudrate=left_config.get("baudrate", 1000000),
@@ -51,24 +53,31 @@ class AliciaDualArmController(BaseDualArmController):
             debug_mode=False
         )
 
-        self.right_robot = self.create_robot(
-            port=right_config.get("port", ""),
-            baudrate=right_config.get("baudrate", 1000000),
-            robot_version=right_config.get("robot_version", "v5_6"),
-            gripper_type=right_config.get("gripper_type", "50mm"),
-            speed_deg_s=right_config.get("speed_deg_s", 20.0),
-            debug_mode=False
-        )
-
-        logger.info("Alicia D dual-arm controller initialized")
+        # 仅在双臂模式下创建右臂实例
+        if self.arm_mode == "dual_arm":
+            self.right_robot = self.create_robot(
+                port=right_config.get("port", ""),
+                baudrate=right_config.get("baudrate", 1000000),
+                robot_version=right_config.get("robot_version", "v5_6"),
+                gripper_type=right_config.get("gripper_type", "50mm"),
+                speed_deg_s=right_config.get("speed_deg_s", 20.0),
+                debug_mode=False
+            )
+            logger.info("Alicia D dual-arm controller initialized (dual-arm mode)")
+        else:
+            self.right_robot = None
+            logger.info("Alicia D dual-arm controller initialized (single-arm mode)")
 
     def _get_robot(self, arm: ArmSide):
         """获取对应机械臂的 SDK 实例"""
         return self.left_robot if arm == ArmSide.LEFT else self.right_robot
 
     def connect(self) -> bool:
-        """连接双臂机械臂"""
-        logger.info("Connecting to Alicia D dual-arm robot...")
+        """连接机械臂"""
+        if self.arm_mode == "single_arm":
+            logger.info("Connecting to Alicia D robot (single-arm mode)...")
+        else:
+            logger.info("Connecting to Alicia D dual-arm robot...")
 
         # 连接左臂
         if not self.left_robot.connect():
@@ -76,15 +85,19 @@ class AliciaDualArmController(BaseDualArmController):
             return False
         logger.info("✓ Left arm connected")
 
-        # 连接右臂
-        if not self.right_robot.connect():
-            logger.error("Failed to connect to right arm")
-            self.left_robot.disconnect()
-            return False
-        logger.info("✓ Right arm connected")
+        # 仅在双臂模式下连接右臂
+        if self.arm_mode == "dual_arm":
+            if not self.right_robot.connect():
+                logger.error("Failed to connect to right arm")
+                self.left_robot.disconnect()
+                return False
+            logger.info("✓ Right arm connected")
 
         self._is_connected = True
-        logger.info("✓ Dual-arm connected successfully!")
+        if self.arm_mode == "single_arm":
+            logger.info("✓ Connected successfully!")
+        else:
+            logger.info("✓ Dual-arm connected successfully!")
         return True
 
     def disconnect(self) -> bool:
@@ -92,7 +105,8 @@ class AliciaDualArmController(BaseDualArmController):
         logger.info("Disconnecting from Alicia D robot...")
 
         self.left_robot.disconnect()
-        self.right_robot.disconnect()
+        if self.arm_mode == "dual_arm" and self.right_robot:
+            self.right_robot.disconnect()
 
         self._is_connected = False
         logger.info("✓ Disconnected")
@@ -264,9 +278,10 @@ class AliciaDualArmController(BaseDualArmController):
         """紧急停止"""
         logger.warning("⚠ EMERGENCY STOP!")
 
-        # 关闭双臂力矩
+        # 关闭力矩
         self.enable_torque(ArmSide.LEFT, False)
-        self.enable_torque(ArmSide.RIGHT, False)
+        if self.arm_mode == "dual_arm":
+            self.enable_torque(ArmSide.RIGHT, False)
 
         self._emergency_stopped = True
         return True
@@ -277,7 +292,8 @@ class AliciaDualArmController(BaseDualArmController):
 
         # 重新启用力矩
         self.enable_torque(ArmSide.LEFT, True)
-        self.enable_torque(ArmSide.RIGHT, True)
+        if self.arm_mode == "dual_arm":
+            self.enable_torque(ArmSide.RIGHT, True)
 
         self._emergency_stopped = False
         logger.info("✓ System reset")
