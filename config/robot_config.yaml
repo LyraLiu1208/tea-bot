@@ -20,6 +20,7 @@ real:
     timeout: 1.0
     robot_version: v5_6
     gripper_type: 50mm
+    firmware_version: "5.6.20"  # 固件版本 - 使用旧协议
     speed_deg_s: 20.0
   right_arm:
     port: ""  # 留空自动搜索，或指定如 /dev/ttyACM1
@@ -27,6 +28,7 @@ real:
     timeout: 1.0
     robot_version: v5_6
     gripper_type: 50mm
+    firmware_version: "5.6.20"  # 固件版本 - 使用旧协议
     speed_deg_s: 20.0
   wait_timeout: 6.0
   wait_poll_interval: 0.05

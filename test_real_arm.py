@@ -84,8 +84,9 @@ def print_current_state(controller, arm):
         print(f"  关节角度 (弧度): {[f'{a:.3f}' for a in state.joint_angles]}")
         print(f"  关节角度 (度):   {[f'{a*57.3:.1f}°' for a in state.joint_angles]}")
         print(f"  夹爪值: {state.gripper_value:.1f}")
-        if state.end_effector_pose:
-            print(f"  末端位置: {state.end_effector_pose}")
+        # 末端位姿仅在有真实传感器数据时显示,否则是基于FK计算的,可能不准确
+        # if state.end_effector_pose:
+        #     print(f"  末端位置: {state.end_effector_pose}")
     else:
         print("✗ 无法获取状态")
 
@@ -104,13 +105,23 @@ def move_to_home(controller, arm):
 def move_to_preset_1(controller, arm):
     """预设位置 1: 轻微弯曲"""
     print(f"\n正在移动 {arm.value} 臂到预设位置 1 (轻微弯曲)...")
+
+    # 显示当前角度
+    print("\n当前角度:")
+    state = controller.get_state(arm)
+    if state:
+        print(f"  {[f'{a*57.3:.1f}°' for a in state.joint_angles]}")
+
     # Joint2 和 Joint3 轻微弯曲
     angles = [0.0, 0.3, 0.5, 0.0, 0.0, 0.0]  # 约 17°, 29°
-    print(f"目标角度 (度): {[f'{a*57.3:.1f}°' for a in angles]}")
+    print(f"\n目标角度 (度): {[f'{a*57.3:.1f}°' for a in angles]}")
+
+    print("\n⚠️  观察机械臂是否移动...")
 
     if controller.move_joint_smooth(arm, angles, steps=80, step_delay=0.006):
-        print("✓ 已到达预设位置 1")
+        print("✓ 命令执行完成")
         time.sleep(1)
+        print("\n到达后的角度:")
         print_current_state(controller, arm)
     else:
         print("✗ 移动失败")

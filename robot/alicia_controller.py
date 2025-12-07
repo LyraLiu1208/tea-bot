@@ -50,6 +50,7 @@ class AliciaDualArmController(BaseDualArmController):
             robot_version=left_config.get("robot_version", "v5_6"),
             gripper_type=left_config.get("gripper_type", "50mm"),
             speed_deg_s=left_config.get("speed_deg_s", 20.0),
+            firmware_version=left_config.get("firmware_version", None),  # 尝试让SDK自动检测
             debug_mode=False
         )
 
@@ -61,6 +62,7 @@ class AliciaDualArmController(BaseDualArmController):
                 robot_version=right_config.get("robot_version", "v5_6"),
                 gripper_type=right_config.get("gripper_type", "50mm"),
                 speed_deg_s=right_config.get("speed_deg_s", 20.0),
+                firmware_version=right_config.get("firmware_version", None),  # 支持指定固件版本
                 debug_mode=False
             )
             logger.info("Alicia D dual-arm controller initialized (dual-arm mode)")
